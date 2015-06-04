@@ -1,0 +1,18 @@
+syntax="proto3";
+
+package pb;
+
+service Add {
+    rpc Add (AddRequest) returns (AddReply) {}
+}
+
+
+message AddRequest {
+    int64 a = 1;
+    int64 b = 2;
+}
+
+message AddReply {
+    int64 v = 1;
+}
+
