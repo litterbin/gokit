@@ -17,14 +17,14 @@ func makeEndpoint(a Add) endpoint.Endpoint {
 			return nil, endpoint.ErrContextCanceled
 		}
 
-		addReq, ok := request.(*addRequest)
+		addReq, ok := request.(*AddRequest)
 		if !ok {
 			return nil, endpoint.ErrBadCast
 		}
 
 		v := a(ctx, addReq.A, addReq.B)
 
-		return addResponse{V: v}, nil
+		return &AddResponse{V: v}, nil
 
 	}
 }

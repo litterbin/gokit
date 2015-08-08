@@ -1,10 +1,10 @@
 package main
 
 import (
-	"time"
+	//"time"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/metrics"
+	//"github.com/go-kit/kit/metrics"
 	"github.com/litterbin/gokit/addsvc-grpc/pb"
 	"golang.org/x/net/context"
 )
@@ -14,13 +14,16 @@ import (
 type grpcBinding struct{ endpoint.Endpoint }
 
 func (b grpcBinding) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddReply, error) {
-	addReq := addRequest{req.A, req.B}
+	addReq := &AddRequest{
+		A: req.A,
+		B: req.B,
+	}
 	r, err := b.Endpoint(ctx, addReq)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, ok := r.(*addResponse)
+	resp, ok := r.(*AddResponse)
 	if !ok {
 		return nil, endpoint.ErrBadCast
 	}

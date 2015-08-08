@@ -12,14 +12,13 @@ import (
 	"net"
 	"net/http"
 
-	"golang.org/x/net/context"
+	//"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/expvar"
-	jsoncodec "github.com/go-kit/kit/transport/codec/json"
-	httptransport "github.com/go-kit/kit/transport/http"
+	//	"github.com/go-kit/kit/metrics"
+	//	"github.com/go-kit/kit/metrics/expvar"
+	//httptransport "github.com/go-kit/kit/transport/http"
 
 	kitlog "github.com/go-kit/kit/log"
 	stdlog "log"
@@ -32,14 +31,14 @@ func main() {
 
 	var (
 		debugAddr = fs.String("debug.addr", ":8000", "Address for HTTP debug/instrumentation server")
-		httpAddr  = fs.String("http.addr", ":8001", "Address for HTTP (JSON) server")
-		grpcAddr  = fs.String("grpc.addr", ":8002", "Address for gRPC server")
+		//httpAddr  = fs.String("http.addr", ":8001", "Address for HTTP (JSON) server")
+		grpcAddr = fs.String("grpc.addr", ":8002", "Address for gRPC server")
 
-		zipkinServiceName            = fs.String("zipkin.service.name", "addsvc", "Zipkin service name")
-		zipkinCollectorAddr          = fs.String("zipkin.collector.addr", "", "Zipkin Scribe collector address (empty will log spans)")
-		zipkinCollectorTimeout       = fs.Duration("zipkin.collector.timeout", time.Second, "Zipkin collector timeout")
-		zipkinCollectorBatchSize     = fs.Int("zipkin.collector.batch.size", 100, "Zipkin collector batch size")
-		zipkinCollectorBatchInterval = fs.Duration("zipkin.collector.batch.interval", time.Second, "Zipkin collector batch interval")
+		//zipkinServiceName            = fs.String("zipkin.service.name", "addsvc", "Zipkin service name")
+		//zipkinCollectorAddr          = fs.String("zipkin.collector.addr", "", "Zipkin Scribe collector address (empty will log spans)")
+		//zipkinCollectorTimeout       = fs.Duration("zipkin.collector.timeout", time.Second, "Zipkin collector timeout")
+		//zipkinCollectorBatchSize     = fs.Int("zipkin.collector.batch.size", 100, "Zipkin collector batch size")
+		//zipkinCollectorBatchInterval = fs.Duration("zipkin.collector.batch.interval", time.Second, "Zipkin collector batch interval")
 	)
 
 	flag.Usage = fs.Usage // only show our flags
@@ -48,17 +47,20 @@ func main() {
 	// `package log` domain
 	var logger kitlog.Logger
 	logger = kitlog.NewLogfmtLogger(os.Stderr)
-	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
+	logger = kitlog.NewContext(logger).With("ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
 	stdlog.SetOutput(kitlog.NewStdlibAdapter(logger)) // redirect stdlib logging to us
 	stdlog.SetFlags(0)                                // flags are handled in our logger
 
+	var a Add = pureAdd
 	var e endpoint.Endpoint
 	e = makeEndpoint(a)
 
 	// Mechanical stuff
 	rand.Seed(time.Now().UnixNano())
-	root := context.Background()
+
+	//root := context.Background()
 	errc := make(chan error)
+
 	go func() {
 		errc <- interrupt()
 	}()
@@ -66,26 +68,28 @@ func main() {
 	//Transport: HTTP (debug/intrumentation)
 	go func() {
 		logger.Log("addr", *debugAddr, "transport", "debug")
-		errc <- http.ListenAdnServe(*debugAddr, nil)
+		errc <- http.ListenAndServe(*debugAddr, nil)
 	}()
 
 	//Transport: HTTP (JSON)
-	go func() {
-		ctx, cancel := context.WithCancel(root)
-		defer cancel()
+	/*
+		go func() {
+			ctx, cancel := context.WithCancel(root)
+			defer cancel()
 
-		after := httptransport.BindingAfter(httptransport.SetContentType("application/json"))
+				after := httptransport.BindingAfter(httptransport.SetContentType("application/json"))
 
-		makeRequest := func() interface{} { return &addRequest{} }
+				makeRequest := func() interface{} { return &addRequest{} }
 
-		var handler http.Handler
-		handler = httptransport.NewBinding(ctx, makeRequest, jsoncodec.New(), e, nil, after)
+				var handler http.Handler
+				handler = httptransport.NewBinding(ctx, makeRequest, jsoncodec.New(), e, nil, after)
 
-		mux := http.NewServeMux()
-		mux.Handle("/add", handler)
-		logger.Log("addr", *httpAddr, "transport", "HTTP")
-		errc <- http.ListenAdnServe(*httpAddr, mux)
-	}()
+				mux := http.NewServeMux()
+				mux.Handle("/add", handler)
+				logger.Log("addr", *httpAddr, "transport", "HTTP")
+				errc <- http.ListenAdnServe(*httpAddr, mux)
+		}()
+	*/
 
 	//Transport: gRPC
 	go func() {
