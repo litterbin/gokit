@@ -6,41 +6,55 @@ import (
 	"github.com/go-kit/kit/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"net/rpc"
 	"os"
 )
 
 func main() {
 	fs := flag.NewFlagSet("", flag.ExitOnError)
 	var (
-		grpcAddr = fs.String("grpc.addr", "localhost:8002", "gRPC address")
-		a        = fs.Int64("a", 1, "a value")
-		b        = fs.Int64("b", 2, "b value")
+		grpcAddr   = fs.String("grpc.addr", "localhost:8002", "gRPC address")
+		netRpcAddr = fs.String("netrpc.addr", "localhost:8003", "netrpc address")
+		transport  = fs.String("transport", "grpc", "grpc netrpc")
+		a          = fs.Int64("a", 1, "a value")
+		b          = fs.Int64("b", 2, "b value")
 	)
 
 	fs.Parse(os.Args[1:])
 
 	logger := log.NewLogfmtLogger(os.Stdout)
-	logCtx := log.NewContext(logger).With("ts", log.DefaultTimestampUTC)
+	logger = log.NewContext(logger).With("ts", log.DefaultTimestampUTC)
 
 	var e endpoint.Endpoint
 
-	cc, err := grpc.Dial(*grpcAddr)
-	if err != nil {
-		logCtx.Log("grpc", "connect", "err", err)
-		os.Exit(1)
+	switch *transport {
+	case "grpc":
+		cc, err := grpc.Dial(*grpcAddr)
+		if err != nil {
+			logger.Log("grpc", "connect", "err", err)
+			os.Exit(1)
+		}
+		e = NewGRPCClient(cc)
+	case "netrpc":
+		client, err := rpc.DialHTTP("tcp", *netRpcAddr)
+		if err != nil {
+			logger.Log("netrpc", "connect", "err", err)
+			os.Exit(1)
+		}
+		e = NewNetRpcClient(client)
 	}
-	e = NewGRPCClient(cc)
+
 	response, err := e(context.Background(), AddRequest{A: *a, B: *b})
 	if err != nil {
-		logCtx.Log("response", response, "err", err)
+		logger.Log("response", response, "err", err)
 		os.Exit(1)
 	}
 
 	addResponse, ok := response.(AddResponse)
 	if !ok {
-		logCtx.Log("response", response, "ok", ok)
+		logger.Log("response", response, "ok", ok)
 		os.Exit(1)
 	}
 
-	logCtx.Log("response", addResponse.V)
+	logger.Log("response", addResponse.V)
 }

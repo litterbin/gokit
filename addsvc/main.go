@@ -62,7 +62,8 @@ func main() {
 	// Mechanical stuff
 	rand.Seed(time.Now().UnixNano())
 
-	root := context.Background()
+	bg := context.Background()
+	root := context.WithValue(bg, "logger", logger)
 	errc := make(chan error)
 
 	go func() {
@@ -114,7 +115,7 @@ func main() {
 
 	}()
 
-	//net/rpc
+	//Transport: net/rpc
 	go func() {
 		ctx, cancel := context.WithCancel(root)
 		defer cancel()

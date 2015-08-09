@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-kit/kit/endpoint"
 	"golang.org/x/net/context"
 	"net/rpc"
@@ -20,6 +21,7 @@ func NewNetRpcClient(c *rpc.Client) endpoint.Endpoint {
 				errs <- err
 				return
 			}
+			fmt.Println("response", response)
 			responses <- response
 
 		}()
