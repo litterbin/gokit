@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/go-kit/kit/endpoint"
-	"github.com/litterbin/gokit/addsvc-grpc/pb"
+	"github.com/litterbin/gokit/addsvc/pb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

@@ -23,7 +23,7 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	stdlog "log"
 
-	"github.com/litterbin/gokit/addsvc-grpc/pb"
+	"github.com/litterbin/gokit/addsvc/pb"
 )
 
 func main() {
@@ -52,6 +52,8 @@ func main() {
 	stdlog.SetFlags(0)                                // flags are handled in our logger
 
 	var a Add = pureAdd
+	a = logging(logger)(a)
+
 	var e endpoint.Endpoint
 	e = makeEndpoint(a)
 
