@@ -11,8 +11,9 @@ import (
 
 	"net"
 	"net/http"
+	"net/rpc"
 
-	//"golang.org/x/net/context"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	"github.com/go-kit/kit/endpoint"
@@ -32,7 +33,8 @@ func main() {
 	var (
 		debugAddr = fs.String("debug.addr", ":8000", "Address for HTTP debug/instrumentation server")
 		//httpAddr  = fs.String("http.addr", ":8001", "Address for HTTP (JSON) server")
-		grpcAddr = fs.String("grpc.addr", ":8002", "Address for gRPC server")
+		grpcAddr   = fs.String("grpc.addr", ":8002", "Address for gRPC server")
+		netrpcAddr = fs.String("netrpc.addr", ":8003", "Address for net/rpc server")
 
 		//zipkinServiceName            = fs.String("zipkin.service.name", "addsvc", "Zipkin service name")
 		//zipkinCollectorAddr          = fs.String("zipkin.collector.addr", "", "Zipkin Scribe collector address (empty will log spans)")
@@ -47,7 +49,7 @@ func main() {
 	// `package log` domain
 	var logger kitlog.Logger
 	logger = kitlog.NewLogfmtLogger(os.Stderr)
-	logger = kitlog.NewContext(logger).With("ts", kitlog.DefaultTimestampUTC, "caller", kitlog.DefaultCaller)
+	logger = kitlog.NewContext(logger).With("ts", kitlog.DefaultTimestampUTC)
 	stdlog.SetOutput(kitlog.NewStdlibAdapter(logger)) // redirect stdlib logging to us
 	stdlog.SetFlags(0)                                // flags are handled in our logger
 
@@ -60,7 +62,7 @@ func main() {
 	// Mechanical stuff
 	rand.Seed(time.Now().UnixNano())
 
-	//root := context.Background()
+	root := context.Background()
 	errc := make(chan error)
 
 	go func() {
@@ -110,6 +112,17 @@ func main() {
 		logger.Log("addr", *grpcAddr, "transport", "gRPC")
 		errc <- s.Serve(ln)
 
+	}()
+
+	//net/rpc
+	go func() {
+		ctx, cancel := context.WithCancel(root)
+		defer cancel()
+		s := rpc.NewServer()
+		s.RegisterName("addsvc", NetRpcBinding{ctx, e})
+		s.HandleHTTP(rpc.DefaultRPCPath, rpc.DefaultDebugPath)
+		logger.Log("addr", *netrpcAddr, "transport", "net/rpc")
+		errc <- http.ListenAndServe(*netrpcAddr, s)
 	}()
 
 	logger.Log("fatal", <-errc)
