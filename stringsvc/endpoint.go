@@ -5,35 +5,35 @@ import (
 	"golang.org/x/net/context"
 )
 
-type uppercaseRequest struct {
+type UppercaseRequest struct {
 	S string `json:"s"`
 }
 
-type uppercaseResponse struct {
+type UppercaseResponse struct {
 	V   string `json:"v"`
 	Err error  `json:"err"`
 }
 
-type countRequest struct {
+type CountRequest struct {
 	S string `json:"s"`
 }
 
-type countResponse struct {
+type CountResponse struct {
 	V int `json:"v"`
 }
 
 func makeUppercaseEndpoint(svc StringService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(uppercaseRequest)
+		req := request.(UppercaseRequest)
 		v, err := svc.Uppercase(req.S)
-		return uppercaseResponse{v, err}, nil
+		return UppercaseResponse{v, err}, nil
 	}
 }
 
 func makeCountEndpoint(svc StringService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(countRequest)
+		req := request.(CountRequest)
 		v := svc.Count(req.S)
-		return countResponse{v}, nil
+		return CountResponse{v}, nil
 	}
 }

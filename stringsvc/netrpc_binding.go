@@ -11,10 +11,10 @@ type NetRpcBinding struct {
 	countEndpoint     endpoint.Endpoint
 }
 
-func (n *NetRpcBinding) Uppercase(req uppercaseRequest, res *uppercaseResponse) error {
+func (n NetRpcBinding) Uppercase(req UppercaseRequest, res *UppercaseResponse) error {
 	ctx, cancel := context.WithCancel(n.Context)
 	defer cancel()
-	responses := make(chan uppercaseResponse, 1)
+	responses := make(chan UppercaseResponse, 1)
 	errs := make(chan error, 1)
 
 	go func() {
@@ -23,7 +23,7 @@ func (n *NetRpcBinding) Uppercase(req uppercaseRequest, res *uppercaseResponse) 
 			errs <- err
 			return
 		}
-		responses <- resp.(uppercaseResponse)
+		responses <- resp.(UppercaseResponse)
 		return
 	}()
 
@@ -39,10 +39,10 @@ func (n *NetRpcBinding) Uppercase(req uppercaseRequest, res *uppercaseResponse) 
 	return nil
 }
 
-func (n *NetRpcBinding) Count(req countRequest, res *countResponse) error {
+func (n *NetRpcBinding) Count(req CountRequest, res *CountResponse) error {
 	ctx, cancel := context.WithCancel(n.Context)
 	defer cancel()
-	responses := make(chan countResponse, 1)
+	responses := make(chan CountResponse, 1)
 	errs := make(chan error, 1)
 
 	go func() {
@@ -51,7 +51,7 @@ func (n *NetRpcBinding) Count(req countRequest, res *countResponse) error {
 			errs <- err
 			return
 		}
-		responses <- resp.(countResponse)
+		responses <- resp.(CountResponse)
 		return
 	}()
 

@@ -13,7 +13,6 @@ func main() {
 	svc := stringService{}
 
 	//net/rpc
-
 	netRpcB := NetRpcBinding{ctx, makeUppercaseEndpoint(svc), makeCountEndpoint(svc)}
 
 	s := rpc.NewServer()
